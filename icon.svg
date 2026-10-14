@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#4A7A5A"/>
+  <!-- Fridge body -->
+  <rect x="146" y="96" width="220" height="320" rx="18" fill="#FAF7F1"/>
+  <rect x="146" y="96" width="220" height="120" rx="18" fill="#FFFFFF" stroke="#E7E0D2" stroke-width="4"/>
+  <rect x="146" y="216" width="220" height="200" rx="18" fill="#FFFFFF" stroke="#E7E0D2" stroke-width="4"/>
+  <!-- Handles -->
+  <rect x="320" y="130" width="14" height="56" rx="7" fill="#4A7A5A"/>
+  <rect x="320" y="250" width="14" height="84" rx="7" fill="#4A7A5A"/>
+  <!-- Carrot + leaf inside fridge -->
+  <circle cx="235" cy="155" r="28" fill="#F9EAD9"/>
+  <text x="235" y="168" font-size="36" text-anchor="middle">🥕</text>
+  <text x="235" y="310" font-size="52" text-anchor="middle">🥦</text>
+  <text x="235" y="375" font-size="26" text-anchor="middle">🍳</text>
+  <text x="256" y="478" font-size="22" fill="#FFFFFF" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="700">Fridge Chef</text>
+</svg>

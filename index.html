@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fridge Chef</title>
+<meta name="description" content="Offline recipe and meal-planning app. No sign-in. Estimates only.">
+<meta name="theme-color" content="#4A7A5A">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Fridge Chef">
+<script>
+/* Apply saved theme before first paint to avoid a flash. */
+try {
+  var _s = JSON.parse(localStorage.getItem('fridgechef.v1') || '{}');
+  var _t = (_s.settings && _s.settings.theme) || 'system';
+  var _dark = _t === 'dark' || (_t !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  document.documentElement.dataset.theme = _dark ? 'dark' : 'light';
+} catch (e) { document.documentElement.dataset.theme = 'light'; }
+</script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="app-header">
+  <div class="brand"><span class="brand-mark" aria-hidden="true">🥕</span><span class="brand-name">Fridge Chef</span></div>
+  <span class="header-tag">Offline · Estimates only</span>
+</header>
+
+<div id="offlineBanner" class="offline-banner hidden" role="alert">You are offline — saved plans, pantry and recipes still work. Everything here works offline.</div>
+
+<main id="main">
+  <!-- COOK -->
+  <section id="view-cook" class="view active" aria-label="Cook">
+    <div class="card">
+      <h2>Single dish suggester</h2>
+      <p class="hint">All prices, calories and nutrients are estimates from the offline recipe engine.</p>
+      <div class="grid2">
+        <label class="field"><span>Diet (strict rule)</span>
+          <select id="cookDiet">
+            <option value="omnivore">Omnivore</option>
+            <option value="vegetarian">Vegetarian (eggs OK)</option>
+            <option value="vegetarian-no-eggs">Vegetarian, no eggs</option>
+            <option value="vegan">Vegan</option>
+          </select>
+        </label>
+        <label class="field"><span>Meal</span>
+          <select id="cookMeal">
+            <option value="any">Any meal</option>
+            <option value="breakfast">Breakfast</option>
+            <option value="lunch">Lunch</option>
+            <option value="dinner">Dinner</option>
+          </select>
+        </label>
+      </div>
+      <label class="field"><span>Servings</span><input type="number" id="cookServings" min="1" max="12" step="1" value="2"></label>
+      <div class="btn-grid">
+        <button class="btn primary" id="btnSuggestDish">Suggest a dish</button>
+        <button class="btn" id="btnSurpriseDish">Surprise me</button>
+      </div>
+      <button class="btn" id="btnSuggestDishAI" style="margin-top:8px">Suggest with AI</button>
+      <p class="muted-note ai-status-line"></p>
+      <div id="cookResult" class="stack" style="margin-top:12px"></div>
+    </div>
+
+    <div class="card">
+      <h2>Your-own-ingredients mode</h2>
+      <p class="hint">Your ingredients are a preference, not a restriction — recipes may use other ingredients, which are listed as Also needs and added to your shopping list. List what you have, one per line or comma-separated — e.g. “eggs 6, rice 500 g, tomatoes 4”.</p>
+      <label class="field"><span>Ingredients you have</span><textarea id="cookIngredientsInput" rows="3" placeholder="eggs 6, rice 500 g, tomatoes 4"></textarea></label>
+      <label class="check-field"><input type="checkbox" id="cookStrictOnly"><span>Only show recipes using my ingredients (strict)</span></label>
+      <button class="btn primary" id="btnCookFromIngredients" style="margin-top:10px">Find dishes from my ingredients</button>
+      <button class="btn" id="btnCookFromIngredientsAI" style="margin-top:8px">Find with AI</button>
+      <p class="muted-note ai-status-line"></p>
+      <div id="cookFromIngredientsResult" class="stack" style="margin-top:12px"></div>
+    </div>
+
+    <div class="card">
+      <h2>Recipes for chosen days</h2>
+      <p class="hint">Pick the days you want recipes for, then generate one recipe per day (or a full day of breakfast, lunch and dinner). Your ingredients are a preference, not a restriction — recipes may use other ingredients, listed as Also needs. Diet is still a strict rule.</p>
+      <p class="muted-note" id="cookDaysSelected">No days selected yet.</p>
+      <div class="btn-grid" style="margin-top:10px">
+        <button class="btn small" data-action="cookdays-quick" data-range="today">Today</button>
+        <button class="btn small" data-action="cookdays-quick" data-range="tomorrow">Tomorrow</button>
+        <button class="btn small" data-action="cookdays-quick" data-range="weekend">This weekend</button>
+        <button class="btn small" data-action="cookdays-quick" data-range="next3">Next 3 days</button>
+        <button class="btn small" data-action="cookdays-quick" data-range="next7">Next 7 days</button>
+        <button class="btn small" data-action="cookdays-quick" data-range="clear">Clear</button>
+      </div>
+      <button class="btn" id="btnPickOnCalendar" style="margin-top:10px">Pick on calendar (My days)</button>
+      <label class="field" style="margin-top:12px"><span>What to generate per day</span>
+        <select id="cookDaysMeal">
+          <option value="dinner">Dinner — one recipe per day</option>
+          <option value="breakfast">Breakfast — one recipe per day</option>
+          <option value="lunch">Lunch — one recipe per day</option>
+          <option value="any">Any single meal — one recipe per day</option>
+          <option value="full">Full day — breakfast, lunch and dinner</option>
+        </select>
+      </label>
+      <label class="field"><span>Ingredients to prefer (optional — a preference, not a restriction)</span><textarea id="cookDaysIngredients" rows="2" placeholder="e.g. spinach, eggs, rice (optional — a preference, not a restriction)"></textarea></label>
+      <label class="check-field"><input type="checkbox" id="cookDaysStrict"><span>Only show recipes using my ingredients (strict)</span></label>
+      <button class="btn primary" id="btnGenerateCookDays" style="margin-top:10px">Generate recipes for chosen days</button>
+      <button class="btn" id="btnGenerateCookDaysAI" style="margin-top:8px">Generate with AI (online)</button>
+      <p class="muted-note ai-status-line"></p>
+      <div id="cookDaysResult" class="stack" style="margin-top:12px"></div>
+      <div class="btn-grid" style="margin-top:12px">
+        <button class="btn" id="btnShareCookDaysPlan">Share plan as text</button>
+        <button class="btn" id="btnCopyCookDaysPlan">Copy plan text</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Chosen-days shopping list</h2>
+      <p class="hint">Required − on-hand. Includes Also needs ingredients. Tick items as you buy them.</p>
+      <div id="cookDaysShoppingList" class="stack"></div>
+      <button class="btn" id="btnCookDaysToShopping" style="margin-top:10px">Send to main shopping list</button>
+    </div>
+
+    <div class="card">
+      <h2>Pantry / Inventory <span class="muted-note" id="pantryCount"></span></h2>
+      <p class="hint">Enter with quantities — e.g. “eggs 6”, “rice 500 g”, “milk 1 l”. Shopping lists subtract what you already have. Shortfalls are shown per recipe.</p>
+      <label class="field"><span>Add pantry item (item + quantity)</span><input type="text" id="pantryInput" placeholder="e.g. eggs 6"></label>
+      <div class="btn-grid">
+        <button class="btn primary" id="btnAddPantry">Add to pantry</button>
+        <button class="btn" id="btnClearPantry">Clear pantry</button>
+      </div>
+      <div id="pantryList" class="stack" style="margin-top:12px"></div>
+    </div>
+
+    <div class="card">
+      <h2>Browse all recipes</h2>
+      <label class="field"><span>Search</span><input type="text" id="recipeSearch" placeholder="Search title or ingredient"></label>
+      <div id="recipeBrowseList" class="stack"></div>
+    </div>
+  </section>
+
+  <!-- MONTH -->
+  <section id="view-month" class="view" aria-label="Month">
+    <div class="card">
+      <h2>Monthly dinner menu</h2>
+      <p class="hint">Estimates only. The cheapest menu that fits your budget is kept. If it still goes over, we show the cheapest attempt and ask how much over you accept.</p>
+      <div class="grid2">
+        <label class="field"><span>Year</span><input type="number" id="monthYear" min="2024" max="2035" step="1"></label>
+        <label class="field"><span>Month</span><input type="number" id="monthMonth" min="1" max="12" step="1"></label>
+      </div>
+      <div class="grid2">
+        <label class="field"><span>Diet</span>
+          <select id="monthDiet">
+            <option value="omnivore">Omnivore</option>
+            <option value="vegetarian">Vegetarian (eggs OK)</option>
+            <option value="vegetarian-no-eggs">Vegetarian, no eggs</option>
+            <option value="vegan">Vegan</option>
+          </select>
+        </label>
+        <label class="field"><span>Restaurant nights</span><input type="number" id="monthRestaurantCount" min="0" max="15" step="1" value="4"></label>
+      </div>
+      <div class="grid2">
+        <label class="field"><span>Budget ($)</span><input type="number" id="monthBudget" min="0" step="1" value="100"></label>
+        <label class="field"><span>How much over budget is OK? ($)</span><input type="number" id="monthOverage" min="0" step="1" value="0"></label>
+      </div>
+      <button class="btn primary" id="btnGenerateMonth">Generate monthly menu</button>
+      <button class="btn" id="btnGenerateMonthAI" style="margin-top:8px">Generate with AI</button>
+      <p class="muted-note ai-status-line"></p>
+      <div id="monthTotal" style="margin-top:10px"></div>
+      <div id="monthResult" class="stack" style="margin-top:12px"></div>
+      <div class="btn-grid" style="margin-top:12px">
+        <button class="btn" id="btnShareMonthPlan">Share plan as text</button>
+        <button class="btn" id="btnCopyMonthPlan">Copy plan text</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Monthly shopping list</h2>
+      <p class="hint">Required − on-hand. Tick items as you buy them.</p>
+      <div id="monthShoppingList" class="stack"></div>
+      <button class="btn" id="btnMonthToShopping" style="margin-top:10px">Send to main shopping list</button>
+    </div>
+  </section>
+
+  <!-- MY DAYS -->
+  <section id="view-mydays" class="view" aria-label="My days">
+    <div class="card">
+      <h2>Meal plan for chosen days</h2>
+      <p class="hint">Tap days on the calendar, then generate breakfast, lunch and dinner with calories, protein, carbs, fat and benefits. Estimates only.</p>
+      <label class="field"><span>Diet</span>
+        <select id="myDaysDiet">
+          <option value="omnivore">Omnivore</option>
+          <option value="vegetarian">Vegetarian (eggs OK)</option>
+          <option value="vegetarian-no-eggs">Vegetarian, no eggs</option>
+          <option value="vegan">Vegan</option>
+        </select>
+      </label>
+      <div id="myDaysCalendar"></div>
+      <p class="muted-note" id="myDaysSelected">No days selected yet.</p>
+      <label class="field"><span>Ingredients to use up (optional — a preference, not a restriction)</span><textarea id="myDaysIngredients" rows="2" placeholder="e.g. spinach, eggs, rice"></textarea></label>
+      <p class="hint">Your ingredients are a preference, not a restriction — plans may use other ingredients, listed as Also needs. Diet is still a strict rule.</p>
+      <button class="btn primary" id="btnGenerateMyDays">Generate plan for selected days</button>
+      <button class="btn" id="btnGenerateMyDaysAI" style="margin-top:8px">Generate with AI</button>
+      <p class="muted-note ai-status-line"></p>
+      <div id="myDaysResult" class="stack" style="margin-top:12px"></div>
+      <div class="btn-grid" style="margin-top:12px">
+        <button class="btn" id="btnShareMyDaysPlan">Share plan as text</button>
+        <button class="btn" id="btnCopyMyDaysPlan">Copy plan text</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>My-days shopping list</h2>
+      <div id="myDaysShoppingList" class="stack"></div>
+      <button class="btn" id="btnMyDaysToShopping" style="margin-top:10px">Send to main shopping list</button>
+    </div>
+  </section>
+
+  <!-- SAVED -->
+  <section id="view-saved" class="view" aria-label="Saved">
+    <div class="card">
+      <h2>Saved dishes &amp; plans</h2>
+      <div id="savedList" class="stack"></div>
+      <div class="btn-grid" style="margin-top:12px">
+        <button class="btn" id="btnClearSaved">Clear saved</button>
+        <button class="btn" id="btnSaveOfflineFile">Save offline file</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Shopping list</h2>
+      <p class="hint">Tickable. Persists on this device. Share as text for Notes.</p>
+      <div id="shoppingList" class="stack"></div>
+      <p class="kv"><span class="k">Estimated total</span><strong id="shoppingTotal">$0.00</strong></p>
+      <label class="field"><span>Share / copy text (for Notes)</span><textarea id="shoppingText" rows="6" readonly></textarea></label>
+      <div class="btn-grid">
+        <button class="btn primary" id="btnShareShopping">Share shopping list</button>
+        <button class="btn" id="btnCopyShopping">Copy shopping text</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Backup &amp; restore</h2>
+      <div class="btn-grid">
+        <button class="btn" id="btnExportJson">Download backup (JSON)</button>
+        <label class="btn file-btn">Restore from backup<input type="file" id="importFile" accept="application/json,.json" hidden></label>
+      </div>
+      <button class="btn danger" id="btnWipeAll" style="margin-top:10px">Erase all local data</button>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section id="view-settings" class="view" aria-label="Settings">
+    <div class="card">
+      <h2>Appearance</h2>
+      <div class="seg" role="radiogroup" aria-label="Appearance" id="themeSeg">
+        <button data-theme-opt="system" role="radio" aria-checked="true">System</button>
+        <button data-theme-opt="light" role="radio" aria-checked="false">Light</button>
+        <button data-theme-opt="dark" role="radio" aria-checked="false">Dark</button>
+      </div>
+      <p class="hint">System follows your device's light / dark setting.</p>
+    </div>
+    <div class="card">
+      <h2>Defaults</h2>
+      <label class="field"><span>Default diet</span>
+        <select id="setDietDefault">
+          <option value="omnivore">Omnivore</option>
+          <option value="vegetarian">Vegetarian (eggs OK)</option>
+          <option value="vegetarian-no-eggs">Vegetarian, no eggs</option>
+          <option value="vegan">Vegan</option>
+        </select>
+      </label>
+      <div class="grid2">
+        <label class="field"><span>Monthly budget ($)</span><input type="number" id="setBudget" min="0" step="1" value="100"></label>
+        <label class="field"><span>Overage OK ($)</span><input type="number" id="setOverage" min="0" step="1" value="0"></label>
+      </div>
+      <div class="grid2">
+        <label class="field"><span>Default servings</span><input type="number" id="setServings" min="1" max="12" step="1" value="2"></label>
+        <label class="field"><span>Units</span>
+          <select id="setUnits"><option value="metric">Metric (g / ml)</option><option value="us">US (oz / cups)</option></select>
+        </label>
+      </div>
+      <button class="btn primary" id="btnSaveSettings">Save settings</button>
+      <span id="settingsStatus" class="muted-note"></span>
+    </div>
+    <div class="card">
+      <h2>AI recipes (optional — offline engine is the default)</h2>
+      <p class="hint">The 48 built-in recipes always work offline. When online, the “with AI” buttons can pull NEW recipes from AI. Recommended: Custom proxy (Vercel) — your key lives on the host (Vercel), never in this app. Direct-key modes send the key from your browser to the provider and are less secure. AI recipes are validated, diet-checked, and cached for offline reuse. See DEPLOY-VERCEL.md to deploy the proxy.</p>
+      <label class="field"><span>Provider</span>
+        <select id="setAiProvider">
+          <option value="custom">Custom proxy (Vercel) — recommended</option>
+          <option value="openai">OpenAI-compatible — browser key — less secure</option>
+          <option value="anthropic">Anthropic — browser key — less secure</option>
+          <option value="off">Off</option>
+        </select>
+      </label>
+      <label class="check-field"><input type="checkbox" id="setAiEnabled" checked><span>Use AI when online</span></label>
+      <div id="aiKeyRow">
+        <label class="field"><span id="aiKeyLabel">API key — browser key — less secure</span><input type="password" id="setAiKey" autocomplete="off" placeholder="sk-... (stored only on this device)"></label>
+        <p class="hint">Direct-key mode sends the key from your browser to the provider. For better security use Custom proxy mode (see server/ai-proxy.js and DEPLOY-VERCEL.md).</p>
+      </div>
+      <p class="hint" id="aiKeyNote" style="display:none">Key lives on Vercel, not in this app. No key is sent from this browser.</p>
+      <label class="field"><span>Model</span><input type="text" id="setAiModel" placeholder="gpt-4o-mini" value="gpt-4o-mini"></label>
+      <label class="field"><span>Endpoint URL</span><input type="text" id="setAiEndpoint" placeholder="/api/ai" value="/api/ai"></label>
+      <label class="check-field"><input type="checkbox" id="setAiCache" checked><span>Cache AI recipes for offline</span></label>
+      <div class="btn-grid">
+        <button class="btn primary" id="btnSaveAiSettings">Save AI settings</button>
+        <button class="btn" id="btnClearAiCache">Clear AI cache</button>
+      </div>
+      <p class="muted-note" id="aiStatus">AI: ready (Custom proxy) — will use AI when online</p>
+    </div>
+    <div class="card" id="installTip">
+      <h2>Install on iPhone</h2>
+      <p class="hint">Open this page in Safari → Share → Add to Home Screen. After the first visit, the app works offline from the home screen. See INSTALL-IPHONE.md in the project folder for steps.</p>
+      <p class="hint">Note: plans saved in Safari do not automatically carry over to the home-screen app — use Backup (JSON) or Save offline file to move them. That is an iOS storage behaviour, not a bug in this app.</p>
+    </div>
+    <div class="card">
+      <h2>About</h2>
+      <p class="hint">Fridge Chef · offline PWA · v1.3.0<br>Hybrid AI (v1.3.0): 48 built-in offline recipes always work; optional AI (Custom proxy / Vercel recommended, or direct provider key) pulls NEW recipes when online, validates + diet-checks them, and caches them for offline reuse. Dark mode (System / Light / Dark), recipes for chosen days, and ingredients as a preference (not a restriction) with Also needs shown. Diet stays a strict rule. All prices, calories and nutrients are estimates. Recipes are checked against your diet and pantry quantities locally. No sign-in, no account, no data leaves this device unless you share or export it — and your API key is never included in backups.</p>
+    </div>
+  </section>
+</main>
+
+<nav class="tabbar" aria-label="Primary">
+  <button data-tab="cook" class="on"><span class="tab-ico">🍳</span><span>Cook</span></button>
+  <button data-tab="month"><span class="tab-ico">📅</span><span>Month</span></button>
+  <button data-tab="mydays"><span class="tab-ico">🗓️</span><span>My days</span></button>
+  <button data-tab="saved"><span class="tab-ico">💾</span><span>Saved</span></button>
+  <button data-tab="settings"><span class="tab-ico">⚙️</span><span>Settings</span></button>
+</nav>
+
+<div id="toast" class="toast hidden" role="status"></div>
+
+<script src="recipes.js"></script>
+<script src="app.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  });
+}
+</script>
+</body>
+</html>
