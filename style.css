@@ -153,8 +153,8 @@ dialog::backdrop{background:#12291b8a}
 .warn{border:1px solid #d9a44166;background:#d9a44114;border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.5}
 #guideChips .pill,#guideRecent .pill{cursor:pointer}
 /* Lardovo brand theme — matched to the app icon: emerald, cream, gold */
-:root{--bg:#faf6ec;--ink:#173f2d;--panel-border:#eee2c6;--line:#eadfc4;--line-soft:#f1e8d2;--tag-bg:#f7efdb;--tab-sel-bg:#fdeed0;--tab-sel-ink:#0a6b41;--accent:#0a6b41;--accent-dark:#07512f;--hero:linear-gradient(135deg,#0d7a49,#054a2a);--ring-track:#f0e5c8;--gold:#f2a71b;--logo-bg:#fdf3d8}
-[data-theme="dark"]{--bg:#071a10;--panel:#0e2818;--panel-border:#1d3d27;--line:#1d3d27;--line-soft:#1d3d27;--hero:linear-gradient(135deg,#0a5c37,#032b16);--gold:#ffb52e;--accent:#1fa065;--logo-bg:#14301d}
+:root:not([data-theme="dark"]){--bg:#faf6ec;--ink:#173f2d;--panel-border:#eee2c6;--line:#eadfc4;--line-soft:#f1e8d2;--tag-bg:#f7efdb;--tab-sel-bg:#fdeed0;--tab-sel-ink:#0a6b41;--accent:#0a6b41;--accent-dark:#07512f;--hero:linear-gradient(135deg,#0d7a49,#054a2a);--ring-track:#f0e5c8;--gold:#f2a71b;--logo-bg:#fdf3d8}
+[data-theme="dark"]{--bg:#071a10;--panel:#0e2818;--recipe-desc:#b9d2c0;--panel-border:#1d3d27;--line:#1d3d27;--line-soft:#1d3d27;--hero:linear-gradient(135deg,#0a5c37,#032b16);--gold:#ffb52e;--accent:#1fa065;--logo-bg:#14301d}
 .brand strong{font-family:Georgia,'Playfair Display','Times New Roman',serif;font-size:23px;letter-spacing:-.2px}
 .logo-img{width:47px;height:47px;border-radius:13px;box-shadow:0 3px 10px #07512f33;flex:none}
 .page-title h1{font-family:Georgia,'Playfair Display','Times New Roman',serif;letter-spacing:-.5px}
