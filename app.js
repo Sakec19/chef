@@ -233,14 +233,14 @@ async function fetchGuideAI(q){const st=$('guideAIStatus');const btn=$('guideAsk
  btn.disabled=true;st.textContent='Asking AI to write your guide…';
  try{const res=await fetch('/api/guide',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({dish:q,diet:state.diet,avoid:state.avoid}),cache:'no-store'});
   if(res.status===404||res.status===503)throw Error('not-configured');
-  if(!res.ok)throw Error('AI unavailable');
+  if(!res.ok){let detail='';try{detail=(await res.json())?.error||''}catch{}throw Error('AI unavailable (HTTP '+res.status+')'+(detail?': '+detail:''))}
   const body=await res.json();const g=body.guide;
   if(!g||typeof g.title!=='string'||!Array.isArray(g.ingredients)||!Array.isArray(g.steps)||g.steps.length<2)throw Error('Invalid guide received');
   const dish={name:g.title,aliases:[q],cuisine:String(g.cuisine||'AI pick'),time:Number(g.time)||30,servings:Number(g.servings)||2,level:String(g.level||'Medium'),diet:'any',ingredients:g.ingredients.map(parseIng),steps:g.steps.map(String)};
   if(!aiAllowed({ingredients:dish.ingredients.map(i=>i[1])})){st.textContent='The AI guide did not pass your diet/avoid filters, so it was not saved. Try a different dish name.';btn.disabled=false;return}
   aiGuides=[dish,...aiGuides.filter(x=>normDish(x.name)!==normDish(dish.name))].slice(0,10);try{localStorage.setItem(GUIDE_KEY,JSON.stringify(aiGuides))}catch{}
   renderGuideChips();renderGuide(dish,'ai');toast('AI guide saved for offline viewing');
- }catch(e){st.textContent=e.message==='not-configured'?'The AI guide service is not switched on for this app yet (the api/guide file has not been deployed). The offline library still works.':'Could not get an AI guide right now. Check your connection and try again.';btn.disabled=false}}
+ }catch(e){st.textContent=e.message==='not-configured'?'The AI guide service is not switched on for this app yet (the api/guide file has not been deployed, or no AI key is set on the server). The offline library still works.':(e.message&&e.message.startsWith('AI unavailable')?e.message+'. The offline library still works.':'Could not get an AI guide right now. Check your connection and try again.');btn.disabled=false}}
 $('guideForm').addEventListener('submit',e=>{e.preventDefault();const q=$('guideInput').value.trim();if(!q)return;const d=findGuide(q);if(d)renderGuide(d,aiGuides.includes(d)?'ai':'library');else renderGuideNotFound(q)});
 function guideChipClick(e){const b=e.target.closest('[data-guide]');if(!b)return;const d=findGuide(b.dataset.guide);if(d){$('guideInput').value=d.name;renderGuide(d,aiGuides.includes(d)?'ai':'library')}}
 $('guideChips').addEventListener('click',guideChipClick);
