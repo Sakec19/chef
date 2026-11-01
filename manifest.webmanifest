@@ -1,1 +1,35 @@
-{"background_color":"#FAF7F1","description":"Offline recipe and meal-planning app. No sign-in. Estimates only.","display":"standalone","icons":[{"sizes":"192x192","src":"icon-192.png","type":"image/png"},{"sizes":"512x512","src":"icon-512.png","type":"image/png"},{"purpose":"maskable","sizes":"512x512","src":"icon-512.png","type":"image/png"},{"sizes":"any","src":"icon.svg","type":"image/svg+xml"}],"id":"./","name":"Fridge Chef","orientation":"portrait","scope":"./","short_name":"Fridge Chef","start_url":"./index.html","theme_color":"#4A7A5A"}
+{
+ "background_color": "#FAF7F1",
+ "description": "Offline recipe and meal-planning app. No sign-in. Estimates only.",
+ "display": "standalone",
+ "icons": [
+  {
+   "sizes": "192x192",
+   "src": "icon-192.png",
+   "type": "image/png"
+  },
+  {
+   "sizes": "512x512",
+   "src": "icon-512.png",
+   "type": "image/png"
+  },
+  {
+   "purpose": "maskable",
+   "sizes": "512x512",
+   "src": "icon-512.png",
+   "type": "image/png"
+  },
+  {
+   "sizes": "any",
+   "src": "icon.svg",
+   "type": "image/svg+xml"
+  }
+ ],
+ "id": "./",
+ "name": "Lardovo",
+ "orientation": "portrait",
+ "scope": "./",
+ "short_name": "Lardovo",
+ "start_url": "./index.html",
+ "theme_color": "#4A7A5A"
+}
